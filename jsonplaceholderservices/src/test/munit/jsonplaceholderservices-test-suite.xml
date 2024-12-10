@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="jsonplaceholderservices-test-suite.xml" />
+	<munit:test name="testGetAllPostsWithComments" description="Test Get All Posts with Comments">
+    <munit:execution>
+        <munit:flow-ref name="getAllPostsWithCommentsFlow"/>
+    </munit:execution>
+    <munit:behavior>
+        <munit-tools:mock-when processor="http:request" doc:name="Mock Get Posts">
+            <munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Get Posts" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="1c115e0c-b815-4144-9c8e-242920dc61fe" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="GET" attributeName="method" />
+					<munit-tools:with-attribute whereValue="https://jsonplaceholder.typicode.com/posts" attributeName="url" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return payload="[
+                {id: 1, title: Post 1, body: Body 1},
+                {id: 2, title: Post 2, body: Body 2}
+            ]"/>
+        </munit-tools:mock-when>
+        <munit-tools:mock-when processor="http:request" doc:name="Mock Get Comments">
+            <munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Get Comments" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="8d9614ea-c97a-4183-b9cb-cc21a7050a6d" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="GET" attributeName="method" />
+					<munit-tools:with-attribute whereValue="https://jsonplaceholder.typicode.com/comments" attributeName="url" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return payload="[
+                {id : 1, postId: 1, body: Comment1}
+            ]"/>
+        </munit-tools:mock-when>
+    </munit:behavior>
+    <munit:validation>
+			<munit-tools:assert-equals doc:name="Assert equals" doc:id="49e9d3b3-9f8f-4b63-807c-ef634746e048" actual="#[payload]" expected="[
+            {postId: 1, title: Post 1, body: Body 1, comments: [{id: 1, postId: 1, body: Comment 1}, {id: 2, postId: 1, body: Comment 2}]},
+            {postId: 2, title: Post 2, body: Body 2, comments: []}
+        ]"/>
+    </munit:validation>
+</munit:test>
+	<munit:test name="testRemovePost" description="Test Remove Post and Comments">
+    <munit:execution>
+        <munit:flow-ref name="removePostFlow"/>
+    </munit:execution>
+    <munit:behavior>
+        <munit-tools:mock-when processor="http:request" doc:name="Mock Delete Comments">
+            <munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Delete Comments" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="5a12392d-72ac-4a16-8ece-b0c24fc0c2f3" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="DELETE" attributeName="method" />
+					<munit-tools:with-attribute whereValue="https://jsonplaceholder.typicode.com/comments" attributeName="url" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return payload="[]" statusCode="200"/>
+        </munit-tools:mock-when>
+        <munit-tools:mock-when processor="http:request" doc:name="Mock Delete Post">
+            <munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Delete Post" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="9be2f413-fe23-4bed-9b72-b37b43ddb5a5" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="DELETE" attributeName="method" />
+					<munit-tools:with-attribute whereValue="https://jsonplaceholder.typicode.com/posts/{postId}" attributeName="url" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return payload="[]" statusCode="200"/>
+        </munit-tools:mock-when>
+    </munit:behavior>
+    <munit:validation>
+			<munit-tools:assert-equals doc:name="Assert equals" doc:id="adbc5d2b-b528-47bf-8068-d495a844deea" expected='{\"message\":\"Post and comments deleted successfully.\"}' actual="#[payload]"/>
+    </munit:validation>
+</munit:test>
+	<munit:test name="jsonplaceholderservices-test-suite-updateCommentFlowTest" doc:id="f443ed4d-a200-46af-82bb-90ad77511a4e" description="Test">
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to updateCommentFlow" doc:id="b066c29b-c18f-4ee0-af80-6bd9a154d0d3" name="updateCommentFlow"/>
+		</munit:execution>
+		<munit:behavior>
+        <munit-tools:mock-when processor="http:request" doc:name="Mock Update Comment">
+            <munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Update Comment" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="b5e847f3-be5b-4f48-9bad-bf57eac460fc" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="PUT" attributeName="method" />
+					<munit-tools:with-attribute whereValue="https://jsonplaceholder.typicode.com/comments/{commentId}" attributeName="url" />
+				</munit-tools:with-attributes>
+				
+        </munit-tools:mock-when>
+    </munit:behavior>
+    <munit:validation>
+        <munit-tools:assert-payload-equals expectedValue="{message:Comment updated successfully.}" doc:name="Validate Response"/>
+			<munit-tools:assert-equals doc:name="Assert equals" doc:id="5eb762f0-c0a4-4608-94a3-85fd286ca634" actual="#[payload]" expected="{"/>
+    </munit:validation>
+	</munit:test>
+
+
+
+</mule>
