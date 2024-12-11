@@ -55,7 +55,7 @@
 		<dependency>
 			<groupId>0242e5dd-043a-420d-af92-e619e11e9c94</groupId>
 			<artifactId>mymuleproject</artifactId>
-			<version>1.0.3</version>
+			<version>1.0.4</version>
 			<classifier>raml</classifier>
 			<type>zip</type>
 		</dependency>
