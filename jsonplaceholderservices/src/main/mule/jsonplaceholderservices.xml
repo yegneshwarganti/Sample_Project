@@ -13,47 +13,39 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
         <http:listener-connection host="0.0.0.0" port="8081"/>
     </http:listener-config>
 	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="b450177c-b871-48e6-8411-e3c4afbdff59"/>
-	<flow name="getAllPostsWithCommentsFlow" doc:id="0a92e2cf-a890-4e74-81b6-f797eb1d30ff">
-    <http:listener doc:name="Listener" doc:id="a5c78972-b77a-40d2-bc5d-05d1930a478c" config-ref="HTTP_Listener_config" path="/postsWithComments"/>
-    <http:request doc:name="Get Posts" doc:id="1c115e0c-b815-4144-9c8e-242920dc61fe" method="GET" url="https://jsonplaceholder.typicode.com/posts"/>
-    <foreach doc:name="For Each Post" doc:id="55c18059-2a35-4d7b-aa88-cb2f6ed8d007">
-        <http:request doc:name="Get Comments" doc:id="8d9614ea-c97a-4183-b9cb-cc21a7050a6d" method="GET" url="https://jsonplaceholder.typicode.com/comments">
-            <http:query-params><![CDATA[#[{
-                    "postId": payload.id
-                }]]]></http:query-params>
+	<flow name="getAllPostsWithCommentsFlow">
+    <http:listener config-ref="HTTP_Listener_config" path="/postsWithComments" method="GET"/>
+    <http:request config-ref="HTTP_Request_configuration" method="GET" url="https://jsonplaceholder.typicode.com/posts" doc:name="Get Posts"/>
+    <foreach>
+        <http:request config-ref="HTTP_Request_configuration" method="GET" url="https://jsonplaceholder.typicode.com/comments" doc:name="Get Comments">
         </http:request>
-        <set-payload value="#[{ postId: payload.id, title: payload.title, body: payload.body, comments: payload }]" doc:name="Set Payload"/>
+        <set-variable variableName="comments" value="#[payload]" doc:name="Comments"/>
+        <set-payload value="#[{
+            id: payload.id,
+            title: payload.title,
+            body: payload.body,
+            comments: vars.comments
+        }]"/>
     </foreach>
-    <set-payload value="#[payload]" doc:name="Aggregate Posts with Comments"/>
 </flow>
 
-	<flow name="removePostFlow" doc:id="823fffee-c4a5-4b8a-bcd6-83aa3be698e5">
-    <http:listener doc:name="Listener" doc:id="7383b1df-bdec-4355-ac67-47155c1ffb3a" config-ref="HTTP_Listener_config" path="/removePost/{postId}" method="DELETE"/>
-    <http:request doc:name="Delete Comments" doc:id="5a12392d-72ac-4a16-8ece-b0c24fc0c2f3" method="DELETE" url="https://jsonplaceholder.typicode.com/comments">
-        <http:query-params><![CDATA[#[{
-                "postId": attributes.uriParams.postId
-            }]]]></http:query-params>
+	<flow name="removePostFlow">
+    <http:listener config-ref="HTTP_Listener_config" path="/removePost/{postId}" method="DELETE"/>
+    <http:request config-ref="HTTP_Request_configuration" method="DELETE" url="https://jsonplaceholder.typicode.com/comments" doc:name="Delete Comments">
     </http:request>
-    <http:request doc:name="Delete Post" doc:id="9be2f413-fe23-4bed-9b72-b37b43ddb5a5" method="DELETE" url="https://jsonplaceholder.typicode.com/posts/{postId}"/>
-    <set-payload value="#[{ message: 'Post and comments deleted successfully.' }]" doc:name="Set Response"/>
+    <http:request config-ref="HTTP_Request_configuration" method="DELETE" url="https://jsonplaceholder.typicode.com/posts/{postId}" doc:name="Delete Posts"/>
+    <set-payload value="#[{message: 'Post and comments deleted successfully.'}]"/>
 </flow>
-<flow name="updateCommentFlow" doc:id="6fc467a9-0753-4847-9d9b-a8a496655e3d">
-    <http:listener doc:name="Listener" doc:id="f7185524-776a-4110-b2cc-d5931ad7a0c2" config-ref="HTTP_Listener_config" path="/updateComment/{commentId}" method="PUT"/>
-    <set-payload doc:name="Prepare Payload">
-        <dw:transform-message><![CDATA[
-            %dw 2.0
-            output application/json
-            ---
-            {
-                id: attributes.uriParams.commentId,
-                name: payload.name,
-                email: payload.email,
-                body: payload.body
-            }
-        ]]></dw:transform-message>
-    </set-payload>
-    <http:request doc:name="Update Comment" doc:id="b5e847f3-be5b-4f48-9bad-bf57eac460fc" method="PUT" url="https://jsonplaceholder.typicode.com/comments/{commentId}"/>
-    <set-payload value="#[{ message: 'Comment updated successfully.', updatedComment: payload }]" doc:name="Set Response"/>
+<flow name="updateCommentFlow">
+    <http:listener config-ref="HTTP_Listener_config" path="/updateComment/{commentId}" method="PUT"/>
+    <http:request config-ref="HTTP_Request_configuration" method="PUT" url="https://jsonplaceholder.typicode.com/comments/{commentId}" doc:name="Update Comments">
+        <http:body><![CDATA[{
+            "name": payload.name,
+            "email": payload.email,
+            "body": payload.body
+        }]]></http:body>
+    </http:request>
+    <set-payload value="#[{message: 'Comment updated successfully.', updatedComment: payload}]"/>
 </flow>
 
 </mule>
