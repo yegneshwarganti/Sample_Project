@@ -7,11 +7,11 @@
     <flow name="mymuleproject-main">
         <http:listener config-ref="mymuleproject-httpListenerConfig" path="/api/*">
             <http:response statusCode="#[vars.httpStatus default 200]">
-                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
             </http:response>
             <http:error-response statusCode="#[vars.httpStatus default 500]">
-                <http:body>#[payload]</http:body>
-                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
             </http:error-response>
         </http:listener>
         <apikit:router config-ref="mymuleproject-config" />
@@ -124,7 +124,7 @@ output application/json
         </error-handler>
     </flow>
     <flow name="put:\comments\(commentId):application\json:mymuleproject-config">
-		<flow-ref doc:name="Flow Reference" doc:id="52750742-7738-4499-a4bc-9b2a5361038b" name="updateCommentFlow"/>
+		<flow-ref doc:name="Flow Reference" doc:id="95be3955-5a5f-4f01-89d2-aa69e42c20a9" name="updateCommentFlow"/>
 		<ee:transform doc:name="Transform Message">
             <ee:variables>
                 <ee:set-variable variableName="commentId">attributes.uriParams.'commentId'</ee:set-variable>
@@ -148,7 +148,7 @@ output application/json
         </ee:transform>
     </flow>
     <flow name="delete:\posts\(postId):mymuleproject-config">
-		<flow-ref doc:name="Flow Reference" doc:id="65960eb0-7e46-4e83-b10e-04bee5576f3a" name="removePostFlow"/>
+		<flow-ref doc:name="Flow Reference" doc:id="88e1323c-a724-49ee-b6a5-b63db0c63159" name="removePostFlow"/>
 		<ee:transform doc:name="Transform Message">
             <ee:variables>
                 <ee:set-variable variableName="postId">attributes.uriParams.'postId'</ee:set-variable>
@@ -166,12 +166,12 @@ output application/json
         </ee:transform>
     </flow>
     <flow name="get:\posts\(postId)\comments:mymuleproject-config">
-        <flow-ref doc:name="Flow Reference" doc:id="59ad7305-7895-455d-a0c3-276c70eef828" name="getAllPostsWithCommentsFlow"/>
+		<flow-ref doc:name="Flow Reference" doc:id="f99d583d-d062-4ca7-a58c-85086bafd425" name="getAllPostsWithCommentsFlow"/>
 		<ee:transform doc:name="Transform Message">
             <ee:variables>
                 <ee:set-variable variableName="postId">attributes.uriParams.'postId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <logger level="INFO" message="get:\posts\(postId)\comments:mymuleproject-config" />
+		<logger level="INFO" message="get:\posts\(postId)\comments:mymuleproject-config" />
     </flow>
 </mule>

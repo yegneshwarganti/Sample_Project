@@ -8,18 +8,19 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
       http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
       http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/mule-dw.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
-
-    <http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="bdf9bca8-5295-41ae-80fb-9e28c403cb87">
-        <http:listener-connection host="0.0.0.0" port="8081"/>
-    </http:listener-config>
 	<http:request-config name="https_Request_configuration" doc:name="HTTP Request configuration" doc:id="bc83baf0-9eff-459d-b43d-3363b33d9c42">
 		<http:request-connection protocol="HTTPS" host="jsonplaceholder.typicode.com" port="443" />
 	</http:request-config>
 	<flow name="getAllPostsWithCommentsFlow" doc:id="9e09eeca-28d4-4cdc-8fd1-43a0e7d8d0ba">
-    <http:listener config-ref="HTTP_Listener_config" path="/postsWithComments" method="GET"/>
+    <http:listener config-ref="mymuleproject-httpListenerConfig" path="/postsWithComments"/>
     <http:request config-ref="https_Request_configuration" method="GET" doc:name="Get Posts" path="/posts"/>
     <foreach>
         <http:request config-ref="https_Request_configuration" method="GET" doc:name="Get Comments" path="/comments">
+				<http:query-params ><![CDATA[#[output application/java
+---
+{
+	postId : payload.id
+}]]]></http:query-params>
         </http:request>
         <set-variable variableName="comments" value="#[payload]" doc:name="Comments"/>
         <set-payload value="#[{
@@ -32,15 +33,20 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 </flow>
 
 	<flow name="removePostFlow" doc:id="2f5be207-0faa-414c-b282-78ba98f1c1c6">
-    <http:listener config-ref="HTTP_Listener_config" path="/removePost/{postId}" method="DELETE"/>
-    <http:request config-ref="https_Request_configuration" method="DELETE" url="https://jsonplaceholder.typicode.com/comments" doc:name="Delete Comments">
+    <http:listener doc:name="Listener" doc:id="7752278f-8713-4268-a846-ba6c203b9760" config-ref="mymuleproject-httpListenerConfig" path="/removePost/{postId}"/>
+		<http:request config-ref="https_Request_configuration" method="DELETE" doc:name="Delete Comments" path="/comments">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	postId : attributes.uriParams.postId
+}]]]></http:query-params>
     </http:request>
-    <http:request config-ref="https_Request_configuration" method="DELETE" url="https://jsonplaceholder.typicode.com/posts/{postId}" doc:name="Delete Posts"/>
+    <http:request config-ref="https_Request_configuration" method="DELETE" doc:name="Delete Posts" path="/posts/{postId}"/>
     <set-payload value="#[{message: 'Post and comments deleted successfully.'}]"/>
 </flow>
 <flow name="updateCommentFlow" doc:id="f6b46a69-3cb1-4c2d-8d18-bf86e44a2c99">
-    <http:listener config-ref="HTTP_Listener_config" path="/updateComment/{commentId}" method="PUT"/>
-    <http:request config-ref="https_Request_configuration" method="PUT" url="https://jsonplaceholder.typicode.com/comments/{commentId}" doc:name="Update Comments">
+    <http:listener config-ref="mymuleproject-httpListenerConfig" path="/updateComment/{commentId}" allowedMethods="GET"/>
+    <http:request config-ref="https_Request_configuration" method="PUT" doc:name="Update Comments" path="/comments/#{attributes.uriParams.commentId}">
         <http:body><![CDATA[{
             "name": payload.name,
             "email": payload.email,
