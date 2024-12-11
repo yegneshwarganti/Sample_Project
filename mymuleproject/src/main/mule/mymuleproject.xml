@@ -124,7 +124,8 @@ output application/json
         </error-handler>
     </flow>
     <flow name="put:\comments\(commentId):application\json:mymuleproject-config">
-        <ee:transform doc:name="Transform Message">
+		<flow-ref doc:name="Flow Reference" doc:id="52750742-7738-4499-a4bc-9b2a5361038b" name="updateCommentFlow"/>
+		<ee:transform doc:name="Transform Message">
             <ee:variables>
                 <ee:set-variable variableName="commentId">attributes.uriParams.'commentId'</ee:set-variable>
             </ee:variables>
@@ -147,29 +148,9 @@ output application/json
         </ee:transform>
     </flow>
     <flow name="delete:\posts\(postId):mymuleproject-config">
-        <ee:transform doc:name="Transform Message">
+		<flow-ref doc:name="Flow Reference" doc:id="65960eb0-7e46-4e83-b10e-04bee5576f3a" name="removePostFlow"/>
+		<ee:transform doc:name="Transform Message">
             <ee:variables>
-                <ee:set-variable variableName="postId">attributes.uriParams.'postId'</ee:set-variable>
-            </ee:variables>
-        </ee:transform>
-        <ee:transform doc:name="Transform Message">
-            <ee:message>
-                <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-  message: "Post and comments deleted successfully."
-} as Object {encoding: "UTF-8", mediaType: "application/json"}]]></ee:set-payload>
-            </ee:message>
-        </ee:transform>
-    </flow>
-    <flow name="get:\posts:mymuleproject-config">
-        <logger level="INFO" message="get:\posts:mymuleproject-config" />
-    </flow>
-    <flow name="delete:\posts\(postId)\comments\(postId):mymuleproject-config">
-        <ee:transform doc:name="Transform Message">
-            <ee:variables>
-                <ee:set-variable variableName="postId">attributes.uriParams.'postId'</ee:set-variable>
                 <ee:set-variable variableName="postId">attributes.uriParams.'postId'</ee:set-variable>
             </ee:variables>
         </ee:transform>
@@ -185,7 +166,8 @@ output application/json
         </ee:transform>
     </flow>
     <flow name="get:\posts\(postId)\comments:mymuleproject-config">
-        <ee:transform doc:name="Transform Message">
+        <flow-ref doc:name="Flow Reference" doc:id="59ad7305-7895-455d-a0c3-276c70eef828" name="getAllPostsWithCommentsFlow"/>
+		<ee:transform doc:name="Transform Message">
             <ee:variables>
                 <ee:set-variable variableName="postId">attributes.uriParams.'postId'</ee:set-variable>
             </ee:variables>
