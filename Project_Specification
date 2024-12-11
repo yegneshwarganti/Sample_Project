@@ -1,0 +1,8 @@
+This project contains 3 flows
+1. getAllPostsWithCommentsFlow
+In this flow we use http listener and http request to call the json place holder api of all posts.
+Another http request to get all the comments and save it to payload and aggregate both posts and comments payload in to a single payload.
+2. removePostCommentsFlow
+In this flow we use one http listener connector to get the data and 2 http request connectors to delete post and comments and finally will send a response if it is successful.
+3. updateCommentFlow
+In this flow we use one http listener connector to get the data and prepare the payload and use put method in the http request to update the comments and send the response if successfully updated.
