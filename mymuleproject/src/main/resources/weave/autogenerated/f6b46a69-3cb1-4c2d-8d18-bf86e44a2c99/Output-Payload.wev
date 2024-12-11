@@ -1,7 +1,0 @@
-%dw 2.0
-
-type auto_f6b46a69_3cb1_4c2d_8d18_bf86e44a2c99_Output_Payload = {|
-  message: String, 
-  updatedComment: Any
-|}
-
