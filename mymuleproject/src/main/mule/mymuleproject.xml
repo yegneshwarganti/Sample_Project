@@ -126,7 +126,7 @@ output application/json
             </on-error-propagate>
         </error-handler>
     </flow>
-    <flow name="put:\comments\(commentId):application\json:mymuleproject-config">
+  <!--   <flow name="put:\comments\(commentId):application\json:mymuleproject-config">
 		<http:listener config-ref="mymuleproject-httpListenerConfig" path="/updateComment/{commentId}" allowedMethods="GET"/>
 		<ee:transform doc:name="Transform Message">
             <ee:variables>
@@ -140,7 +140,7 @@ output application/json
             "body": payload.body
         }]]></http:body>
 			<http:query-params ><![CDATA[#[output application/java
----
+-&#45;&#45;
 {
 	commentId : attributes.uriParams.'commentId'
 }]]]></http:query-params>
@@ -159,7 +159,7 @@ attributes.uriParams.'postId']]></ee:set-variable>
 		</ee:transform>
 		<http:request config-ref="HTTP_Request_configuration" method="DELETE" doc:name="Delete Comments" path="/comments">
 			<http:query-params ><![CDATA[#[output application/java
----
+-&#45;&#45;
 {
 	postId : attributes.uriParams.postId
 }]]]></http:query-params>
@@ -169,7 +169,7 @@ attributes.uriParams.'postId']]></ee:set-variable>
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
 output application/json
----
+-&#45;&#45;
 {
   message: "Post and comments deleted successfully."
 } as Object {encoding: "UTF-8", mediaType: "application/json"}]]></ee:set-payload>
@@ -182,7 +182,7 @@ output application/json
 		<foreach>
         <http:request config-ref="HTTP_Request_configuration" method="GET" doc:name="Get Comments" path="/comments">
 				<http:query-params ><![CDATA[#[output application/java
----
+-&#45;&#45;
 {
 	postId : payload.userId
 }]]]></http:query-params>
@@ -195,6 +195,6 @@ output application/json
             body: payload.body,
             comments: vars.comments
         }]" />
-		<logger level="INFO" doc:name="Loggerpost" doc:id="b7fb35c5-4da0-48a2-a7f3-6b68271a1d6c" message="#[payload]" />
-    </flow>
+		 <logger level="INFO" doc:name="Loggerpost" doc:id="b7fb35c5-4da0-48a2-a7f3-6b68271a1d6c" message="#[payload]" />
+    </flow> -->
 </mule>
