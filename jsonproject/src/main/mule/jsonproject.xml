@@ -1,0 +1,169 @@
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/mule-dw.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+     <http:listener-config name="Http_Listener_Config">
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+
+    <http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="aedef1ab-d562-4d6c-9e3f-1a8d22c22b7e">
+		<http:request-connection host="jsonplaceholder.typicode.com" port="443" protocol="HTTPS"/>
+	</http:request-config>
+	<flow name="GetPostsAndCommentsFlow">
+        <http:listener doc:name="HTTP Listener" config-ref="Http_Listener_Config" path="/posts-comments"/>
+        
+        <!-- Fetch all posts -->
+
+        <!-- Transform the posts response to a collection -->
+        <http:request method="GET" doc:name="Fetch Posts" doc:id="077f9f75-2b8b-47e8-a7ba-a66e6ae48a8d" config-ref="HTTP_Request_configuration" path="/posts"/>
+		<ee:transform doc:name="Transform Posts to Collection" >
+            <ee:message>
+				<ee:set-payload ><![CDATA[%dw 2.0
+
+output application/json
+---
+payload]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <!-- Parallel For Each to Fetch Comments for Each Post -->
+		<ee:transform doc:name="Transform Message" doc:id="4ca8d8b9-30d3-4cad-8e34-8d4bf7d62135" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  objects: payload reduce ((item, acc = {}) -> acc ++ { (item.id): item })
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value="#[payload]" doc:name="post" doc:id="b98356c4-d216-426c-9a7d-d3de89ac2047" variableName="post"/>
+		<http:request method="GET" doc:name="Request" doc:id="3dcf45ff-9259-4278-b5f3-16756f5dde82" config-ref="HTTP_Request_configuration" path="/comments">
+			</http:request>
+		<ee:transform doc:name="Add Comments to Post" doc:id="584e8852-21e8-46d4-a7e8-54925ec090f7">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+
+---
+payload
+	]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		<set-variable value="#[payload]" doc:name="comments" doc:id="f5ea8afb-98bd-43d1-b8df-801ed7013835" variableName="comments"/>
+
+        <!-- Combine all Posts and Comments -->
+	<ee:transform doc:name="Transform Message" doc:id="6fe8dc97-4bf1-41db-bf15-3bd0050ec2b7">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  objects: payload reduce ((item, acc = {}) -> acc ++ { (item.id): item })
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Combine Posts and Comments">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var posts = vars.post
+var comments = vars.comments
+---
+posts.objects pluck ((value1, key1) ->
+    {
+        posts: value1,
+        comments: (comments.objects[key1] default null)
+    }
+)]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+
+        <!-- Return the Response -->
+        <!-- <set-payload doc:name="Set Response" value="#[payload]"/> -->
+    </flow>
+
+    <!-- Remove Posts and Their Comments -->
+    <flow name="remove-post-with-comments">
+        <http:listener path="/posts/{postId}" config-ref="Http_Listener_Config"/>
+        <choice>
+        <when expression="#[attributes.uriParams.postId == null or !attributes.uriParams.postId.isInteger()]">
+            <set-payload value="{status: 400, message: 'Invalid postId. Must be a valid integer.'}"/>
+            <http:response statusCode="400"/>
+            <error-raise/>
+        </when>
+    </choice>
+        <set-variable variableName="postId" value="#[attributes.uriParams.postId]"/>
+        <!-- Delete post -->
+		<http:request method="GET" doc:name="Request" doc:id="36441f35-b994-43c5-89f9-4fa4670c995b" config-ref="HTTP_Request_configuration" path="/posts/{postId}"/>
+        
+		
+		
+		<http:request config-ref="HTTP_Request_configuration" method="DELETE" url="https://jsonplaceholder.typicode.com/posts/#[vars.postId]" />
+		<http:request config-ref="HTTP_Request_configuration" method="DELETE" url="https://jsonplaceholder.typicode.com/comments" />
+		<on-error-propagate enableNotifications="true" doc:name="Handle Not Found">
+            <choice>
+                <when expression="#[error.statusCode == 404]">
+                    <set-payload value="{status: 404, message: 'Post not found.'}"/>
+                    <http:response statusCode="404"/>
+                </when>
+                <otherwise>
+                    <set-payload value="{status: 500, message: 'Error checking post existence.'}"/>
+                    <http:response statusCode="500"/>
+                </otherwise>
+            </choice>
+        </on-error-propagate>
+		
+        <on-error-propagate enableNotifications="true">
+            <set-payload value="{status: 500, message: 'Error deleting the post.'}"/>
+            <http:response statusCode="500"/>
+        </on-error-propagate>
+       <!-- Delete associated comments -->
+        
+        <http:query-params><![CDATA[#[{postId: attributes.uriParams.postId}]]]></http:query-params>
+        <on-error-propagate enableNotifications="true">
+            <set-payload value="{status: 500, message: 'Error deleting comments for the post.'}"/>
+            <http:response statusCode="500"/>
+        </on-error-propagate>	
+        <set-payload value="#[{status: 'Post and associated comments deleted', postId: vars.postId}]"/>
+    </flow>
+
+   <!--  Update a Comment -->
+    <flow name="update-comment">
+        <http:listener path="/comments/{commentId}" config-ref="Http_Listener_Config"/>
+        <choice>
+        <when expression="#[!attributes.uriParams.commentId.isInteger()]">
+            <set-payload value="{status: 400, message: 'Invalid commentId. Must be an integer.'}"/>
+            <http:response statusCode="400"/>
+            <error-raise/>
+        </when>
+    </choice>
+    <!-- Validate Payload -->
+    <choice>
+        <when expression="#[payload == null or payload.name == null or payload.email == null or payload.body == null]">
+            <set-payload value="{status: 400, message: 'Missing required fields: name, email, body.'}"/>
+            <http:response statusCode="400"/>
+            <error-raise/>
+        </when>
+        <when expression="#[payload.name.size() > 100 or payload.email.size() > 255 or payload.body.size() > 500]">
+            <set-payload value="{status: 400, message: 'Field length exceeds limit.'}"/>
+            <http:response statusCode="400"/>
+            <error-raise/>
+        </when>
+       <when expression="#[payload.email == null]">
+            <set-payload value="{status: 400, message: 'Invalid email format.'}"/>
+            <http:response statusCode="400"/>
+            <error-raise/>
+        </when>
+    </choice>
+        <set-variable variableName="commentId" value="#[attributes.uriParams.commentId]"/>
+       
+		<http:request method="PUT" doc:name="Request" doc:id="86b1df9f-314e-49f7-ab4e-6b8be9830d26" config-ref="HTTP_Request_configuration" path="/comments">
+		</http:request>
+    
+	<set-payload doc:name="Set Update Response" value="#[payload]"/>
+    </flow>    
+</mule>
+ 
